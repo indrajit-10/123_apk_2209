@@ -40,6 +40,15 @@ const PATHS = {
     </>
   ),
   chevron: <path d="m9 18 6-6-6-6" />,
+  back: <path d="m15 18-6-6 6-6" />,
+  close: <path d="M18 6 6 18M6 6l12 12" />,
+  share: (
+    <>
+      <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
+      <path d="m16 6-4-4-4 4M12 2v13" />
+    </>
+  ),
+  star: <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />,
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
   play: <path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none" />,
   sparkle: <path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />,
@@ -58,14 +67,14 @@ const PATHS = {
   ),
 };
 
-export default function Icon({ name, size = 22, strokeWidth = 1.9, className }) {
+export default function Icon({ name, size = 22, strokeWidth = 1.9, filled = false, className }) {
   return (
     <svg
       className={className}
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       strokeWidth={strokeWidth}
       strokeLinecap="round"

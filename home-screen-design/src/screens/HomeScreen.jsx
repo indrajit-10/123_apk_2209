@@ -1,20 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import AppBar from './components/AppBar.jsx';
-import CategoryRail from './components/CategoryRail.jsx';
-import HeroCarousel from './components/HeroCarousel.jsx';
-import EventsSection from './components/EventsSection.jsx';
-import EventSpotlight from './components/EventSpotlight.jsx';
-import JustToSay from './components/JustToSay.jsx';
-import CardRail from './components/CardRail.jsx';
-import BirthdayHub from './components/BirthdayHub.jsx';
-import RemindersPrompt from './components/RemindersPrompt.jsx';
-import NativeAd from './components/NativeAd.jsx';
-import CategoryGrid from './components/CategoryGrid.jsx';
-import BottomNav from './components/BottomNav.jsx';
-import { HOME_LAYOUT, BIRTHDAY_FOR } from './data/homeLayout.js';
-import * as content from './data/snapshot.js';
-import { buildEventFeed, eventCards } from './lib/feed.js';
-import { track } from './lib/track.js';
+import AppBar from '../components/AppBar.jsx';
+import CategoryRail from '../components/CategoryRail.jsx';
+import HeroCarousel from '../components/HeroCarousel.jsx';
+import EventsSection from '../components/EventsSection.jsx';
+import EventSpotlight from '../components/EventSpotlight.jsx';
+import JustToSay from '../components/JustToSay.jsx';
+import CardRail from '../components/CardRail.jsx';
+import BirthdayHub from '../components/BirthdayHub.jsx';
+import RemindersPrompt from '../components/RemindersPrompt.jsx';
+import NativeAd from '../components/NativeAd.jsx';
+import CategoryGrid from '../components/CategoryGrid.jsx';
+import { HOME_LAYOUT, BIRTHDAY_FOR } from '../data/homeLayout.js';
+import * as content from '../data/snapshot.js';
+import { TAXONOMY } from '../data/taxonomy.js';
+import { buildEventFeed, eventCards } from '../lib/feed.js';
+import { track } from '../lib/track.js';
+import { useNav } from '../nav.js';
+import { routeForHref } from '../lib/route.js';
 
 const REMINDER_COUNT = 0; // signed-out state; the bell and tab show a badge once reminders exist
 
@@ -51,13 +53,20 @@ function dedupeCards(layout, feed) {
   return out;
 }
 
-function Section({ section, feed, today, cards }) {
+function Section({ section, feed, today, cards, nav }) {
+  const openCategory = (categoryId) => nav.open({ name: 'category', categoryId, subId: null });
+  const openHref = (href) => {
+    const route = routeForHref(href);
+    if (route) nav.open(route);
+  };
   switch (section.type) {
     case 'categoryRail':
       return (
         <CategoryRail
-          categories={content.CATEGORIES}
+          categories={TAXONOMY}
           eventsThisWeek={feed.upcoming.filter((e) => e.inDays < 7).length}
+          onOpen={openCategory}
+          onOpenEvents={() => nav.tab('categories', { name: 'categories', selected: 'events' })}
         />
       );
     case 'hero':
@@ -67,53 +76,30 @@ function Section({ section, feed, today, cards }) {
     case 'eventSpotlight':
       return <EventSpotlight event={spotlightEvent(section, feed)} cards={cards} />;
     case 'justToSay':
-      return <JustToSay items={content.JUST_TO_SAY} />;
+      return <JustToSay items={content.JUST_TO_SAY} onOpen={openHref} />;
     case 'cardRail':
       return <CardRail title={section.title} cards={cards} ranked={section.ranked} analytics={section.analytics} />;
     case 'birthday':
-      return <BirthdayHub relations={BIRTHDAY_FOR} cards={cards} analytics={section.analytics} />;
+      return <BirthdayHub relations={BIRTHDAY_FOR} cards={cards} analytics={section.analytics} onOpen={openHref} />;
     case 'reminders':
       return <RemindersPrompt />;
     case 'nativeAd':
       return <NativeAd />;
     case 'categoryGrid':
-      return <CategoryGrid categories={content.CATEGORIES} />;
+      return (
+        <CategoryGrid
+          categories={TAXONOMY}
+          onOpen={openCategory}
+          onOpenEvents={() => nav.tab('categories', { name: 'categories', selected: 'events' })}
+        />
+      );
     default:
       return null;
   }
 }
 
-// Shows the analytics event each tap fires, so reviewers can check naming against the APK.
-function TrackToast() {
-  const [last, setLast] = useState(null);
-  useEffect(() => {
-    let timer;
-    const onTrack = (e) => {
-      if (e.detail.name === 'HOME_SECTION_IMPRESSION') return;
-      setLast(e.detail);
-      clearTimeout(timer);
-      timer = setTimeout(() => setLast(null), 2400);
-    };
-    window.addEventListener('g123-track', onTrack);
-    return () => {
-      window.removeEventListener('g123-track', onTrack);
-      clearTimeout(timer);
-    };
-  }, []);
-
-  return (
-    <div className={`toast${last ? ' toast--on' : ''}`} role="status" aria-live="polite">
-      {last && (
-        <>
-          <span className="toast__label">Analytics event</span>
-          <code className="toast__name">{last.name}</code>
-        </>
-      )}
-    </div>
-  );
-}
-
 export default function HomeScreen({ today, layout = HOME_LAYOUT }) {
+  const nav = useNav();
   const feed = useMemo(() => buildEventFeed(today), [today]);
   const cardsBySection = useMemo(() => dedupeCards(layout, feed), [layout, feed]);
   const scrollRef = useRef(null);
@@ -142,18 +128,14 @@ export default function HomeScreen({ today, layout = HOME_LAYOUT }) {
   }, [layout, today]);
 
   return (
-    <div className="screen">
-      <div className="screen__scroll" ref={scrollRef} onScroll={(e) => setElevated(e.currentTarget.scrollTop > 4)}>
-        <AppBar searchHint={feed.nearest?.name ?? 'birthday for mom'} reminderCount={REMINDER_COUNT} elevated={elevated} />
-        {layout.map((section) => (
-          <div key={section.id} data-section={section.id} className="feed-block">
-            <Section section={section} feed={feed} today={today} cards={cardsBySection[section.id]} />
-          </div>
-        ))}
-        <p className="feed-end">That’s everything for today. New cards land every week.</p>
-      </div>
-      <TrackToast />
-      <BottomNav reminderCount={REMINDER_COUNT} />
+    <div className="screen__scroll" ref={scrollRef} onScroll={(e) => setElevated(e.currentTarget.scrollTop > 4)}>
+      <AppBar searchHint={feed.nearest?.name ?? 'birthday for mom'} reminderCount={REMINDER_COUNT} elevated={elevated} />
+      {layout.map((section) => (
+        <div key={section.id} data-section={section.id} className="feed-block">
+          <Section section={section} feed={feed} today={today} cards={cardsBySection[section.id]} nav={nav} />
+        </div>
+      ))}
+      <p className="feed-end">That’s everything for today. New cards land every week.</p>
     </div>
   );
 }

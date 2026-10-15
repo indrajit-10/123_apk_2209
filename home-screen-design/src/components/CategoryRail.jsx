@@ -5,7 +5,7 @@ import { track, slugEvent } from '../lib/track.js';
 
 // Every general category in one horizontal rail at the top of Home. The first tile is Events,
 // badged with how many events fall in the next 7 days, so the calendar is never more than one tap away.
-export default function CategoryRail({ categories, eventsThisWeek }) {
+export default function CategoryRail({ categories, eventsThisWeek, onOpen, onOpenEvents }) {
   return (
     <section className="cat-rail" aria-label="Categories">
       <ul className="rail rail--tight">
@@ -13,7 +13,10 @@ export default function CategoryRail({ categories, eventsThisWeek }) {
           <button
             type="button"
             className="cat-chip cat-chip--events"
-            onClick={() => track('HOME_CATEGORY_CLICK_EVENTS', { position: 0 })}
+            onClick={() => {
+              track('HOME_CATEGORY_CLICK_EVENTS', { position: 0 });
+              onOpenEvents();
+            }}
           >
             <span className="cat-chip__art cat-chip__art--events">
               <Icon name="calendar" size={28} strokeWidth={1.8} />
@@ -27,7 +30,10 @@ export default function CategoryRail({ categories, eventsThisWeek }) {
             <button
               type="button"
               className="cat-chip"
-              onClick={() => track(`HOME_CATEGORY_CLICK_${slugEvent(c.id)}`, { position: i + 1, href: c.href })}
+              onClick={() => {
+                track(`HOME_CATEGORY_CLICK_${slugEvent(c.id)}`, { position: i + 1, href: c.href });
+                onOpen(c.id);
+              }}
             >
               <span className="cat-chip__art">
                 <Img src={c.img} label={c.name} />

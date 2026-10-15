@@ -11,7 +11,7 @@ const EXTRA = [
   { id: 'app_exclusives', name: 'App Exclusives', icon: 'sparkle' },
 ];
 
-export default function CategoryGrid({ categories }) {
+export default function CategoryGrid({ categories, onOpen, onOpenEvents }) {
   return (
     <section className="section">
       <SectionHeader title="All categories" />
@@ -21,7 +21,10 @@ export default function CategoryGrid({ categories }) {
             <button
               type="button"
               className="cat-chip"
-              onClick={() => track(`HOME_GRID_CATEGORY_CLICK_${slugEvent(c.id)}`, { href: c.href })}
+              onClick={() => {
+                track(`HOME_GRID_CATEGORY_CLICK_${slugEvent(c.id)}`, { href: c.href });
+                onOpen(c.id);
+              }}
             >
               <span className="cat-chip__art">
                 <Img src={c.img} label={c.name} />
@@ -35,7 +38,10 @@ export default function CategoryGrid({ categories }) {
             <button
               type="button"
               className="cat-chip"
-              onClick={() => track(`HOME_GRID_CATEGORY_CLICK_${slugEvent(x.id)}`)}
+              onClick={() => {
+                track(`HOME_GRID_CATEGORY_CLICK_${slugEvent(x.id)}`);
+                if (x.id !== 'app_exclusives') onOpenEvents();
+              }}
             >
               <span className="cat-chip__art cat-chip__art--icon">
                 <Icon name={x.icon} size={26} strokeWidth={1.7} />

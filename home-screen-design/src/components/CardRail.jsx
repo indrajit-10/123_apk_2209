@@ -2,9 +2,10 @@ import React from 'react';
 import Img from './Img.jsx';
 import Icon from './Icon.jsx';
 import SectionHeader from './SectionHeader.jsx';
+import { CardMeta } from './GridCard.jsx';
 import { track } from '../lib/track.js';
 
-export function CardTile({ card, rank, video, onClick }) {
+export function CardTile({ card, rank, video, meta, onClick }) {
   return (
     <button type="button" className="card-tile" onClick={onClick}>
       <span className="card-tile__art">
@@ -17,6 +18,7 @@ export function CardTile({ card, rank, video, onClick }) {
         )}
       </span>
       <span className="card-tile__title">{card.title}</span>
+      {meta && <CardMeta card={card} />}
     </button>
   );
 }
@@ -30,6 +32,7 @@ export default function CardRail({
   ranked,
   video,
   analytics = {},
+  onViewAll,
   children,
   className = '',
 }) {
@@ -39,7 +42,10 @@ export default function CardRail({
         eyebrow={eyebrow}
         eyebrowUrgent={eyebrowUrgent}
         title={title}
-        onAction={() => track(analytics.viewAll ?? 'CARD_VIEW_ALL', { section: title })}
+        onAction={() => {
+          track(analytics.viewAll ?? 'CARD_VIEW_ALL', { section: title });
+          onViewAll?.();
+        }}
       />
       {children}
       <ul className="rail card-rail">

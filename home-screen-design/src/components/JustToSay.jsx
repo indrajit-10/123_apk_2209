@@ -4,7 +4,7 @@ import SectionHeader from './SectionHeader.jsx';
 import { track, slugEvent } from '../lib/track.js';
 
 // Everyday sentiments as wrapped chips: ten sub-categories in about a hundred points of height.
-export default function JustToSay({ items }) {
+export default function JustToSay({ items, onOpen }) {
   return (
     <section className="section">
       <SectionHeader title="Just to say" onAction={() => track('JUST_TO_SAY_VIEW_ALL')} />
@@ -14,7 +14,10 @@ export default function JustToSay({ items }) {
             <button
               type="button"
               className="chip chip--img"
-              onClick={() => track(`JUST_TO_SAY_CLICK_${slugEvent(s.id)}`, { href: s.href })}
+              onClick={() => {
+                track(`JUST_TO_SAY_CLICK_${slugEvent(s.id)}`, { href: s.href });
+                onOpen(s.href);
+              }}
             >
               <Img src={s.thumb} fallback={s.img} label={s.name} />
               <span>{s.name}</span>
